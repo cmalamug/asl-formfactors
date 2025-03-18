@@ -1,27 +1,119 @@
 import tkinter as tk
+import pandas as pd
 
-# List of texts to cycle through
-texts = ["Hello, World!", "Press Space to Change", "Tkinter is fun!", "Python GUI"]
-current_index = 0  # Track the current text index
+num_conditions = 9
 
-def change_text(event=None):
-    print(f"Key pressed: {event.keysym}") 
-    global current_index
-    current_index = (current_index + 1) % len(texts)  # Cycle through texts
-    label.config(text=texts[current_index])
+class ResearchInterviewApp: 
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Research Interview")
 
-# Create main window
-root = tk.Tk()
-root.title("Text Changer")
-root.geometry("400x200")
+        self.current_condition = None
+        self.current_index = 0
+        self.camera_on = False
+        self.cap = None
 
-# Create label to display text
-label = tk.Label(root, text=texts[current_index], font=("Arial", 20))
-label.pack(expand=True)
+        self.data = pd.read_csv("performance_survey_cleaned.csv")
 
-# Bind spacebar to change text
-root.bind("<space>", change_text)
-root.focus_set()
+        self.label = tk.Label(root, text="Select a Condition", font=("Arial", 18))
+        self.label.pack(pady=20)
 
-# Run the Tkinter event loop
-root.mainloop()
+        self.button_frame = tk.Frame(root)
+        self.button_frame.pack()
+
+        # Create buttons for all conditions
+        for i in range(1, num_conditions + 1):
+            condition_name = f"Condition {i}"
+            btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i: self.start_condition(c))
+            btn.pack(side=tk.LEFT, padx=5)
+
+        self.sentence_label = tk.Label(root, text="", font=("Arial", 16))
+        self.sentence_label.pack(pady=20)
+
+        self.output_label = tk.Label(root, text="", font=("Arial", 14), fg="blue")
+        self.output_label.pack(pady=20)
+
+        self.root.bind("<space>", self.handle_space)
+
+    def start_condition(self, condition):
+        # Store selected condition
+        self.current_condition = condition
+        self.current_index = 0
+
+        # Hide all buttons by destroying them
+        for widget in self.button_frame.winfo_children():
+            widget.destroy()
+
+        # Hide the title label
+        self.label.pack_forget()
+
+        # Show the sentence area
+        self.sentence_label.pack(pady=20)
+        self.output_label.pack(pady=20)
+
+        # Start showing sentences
+        sentences = self.find_sentences(condition)
+        self.show_sentence(sentences)
+
+    def find_sentences(self, condition):
+        return self.data[self.data["condition"] == condition]
+
+    def show_sentence(self, sentences):
+        current_sentence = sentences[[self.current_index]]
+        if self.current_index < len(sentences):  # If more sentences remain
+            intended_meaning = current_sentence["intended_meaning"][0]
+            asl_gloss = current_sentence["asl_gloss"][0]
+            system_recognized = current_sentence["error_asl_gloss"][0]
+        
+        # Show the next sentence
+            self.sentence_label.config(text=f"Please sign the following:\n\n\"{intended_meaning}\"\n\nASL Gloss: {asl_gloss}")
+            self.output_label.config(text="Press SPACE to continue")
+        else:
+        # All sentences completed, show completion message
+            self.sentence_label.config(text="Condition Complete. Select another condition.")
+            self.output_label.config(text="")
+
+        # Wait 2 seconds before showing condition buttons again
+            self.root.after(2000, self.show_condition_buttons)
+
+    def handle_space(self, event, sentences):
+        accuracy = self.current_condition[1]
+
+        if self.current_index < len(sentences[accuracy]):  # Ensure valid index
+            intended_meaning, asl_gloss, system_recognized = sentences[accuracy][self.current_index]
+
+            if not self.camera_on:
+            # Start the camera on first space press
+                self.start_camera()
+            else:
+            # Stop the camera and show system-recognized output
+                self.stop_camera()
+                self.output_label.config(text=f"System Recognized:\n{system_recognized}")
+                self.current_index += 1
+
+            # Show next sentence or finish condition
+                self.show_sentence()
+
+    def show_condition_buttons(self):
+        # Clear the sentence display
+        self.sentence_label.config(text="")
+        self.output_label.config(text="")
+
+        # Show condition selection screen again
+        self.label.config(text="Select a Condition")
+        self.label.pack(pady=20)
+
+        # Recreate the buttons
+        self.button_frame = tk.Frame(self.root)
+        self.button_frame.pack()
+
+        # Create buttons for all conditions
+        for i in range(1, num_conditions + 1):
+            condition_name = f"Condition {i}"
+            btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i: self.start_condition(c))
+            btn.pack(side=tk.LEFT, padx=5)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ResearchInterviewApp(root)
+    root.mainloop()
