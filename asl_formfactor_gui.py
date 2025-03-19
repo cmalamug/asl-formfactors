@@ -7,7 +7,7 @@ class ResearchInterviewApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Research Interview")
-        self.root.geometry("1100x400")
+        self.root.geometry("1500x400")
 
         self.current_condition = None
         self.current_index = 0
@@ -16,7 +16,7 @@ class ResearchInterviewApp:
 
         self.data = pd.read_csv("performance_survey_cleaned.csv")
 
-        self.label = tk.Label(root, text="Select a Condition", font=("Arial", 18))
+        self.label = tk.Label(root, text="Select a Condition", font=("Arial", 24))
         self.label.pack(pady=20)
 
         self.button_frame = tk.Frame(root)
@@ -28,10 +28,10 @@ class ResearchInterviewApp:
             btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i: self.start_condition(c))
             btn.pack(side=tk.LEFT, padx=5)
 
-        self.sentence_label = tk.Label(root, text="", font=("Arial", 16))
+        self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
         self.sentence_label.pack(pady=20)
 
-        self.output_label = tk.Label(root, text="", font=("Arial", 14), fg="blue")
+        self.output_label = tk.Label(root, text="", font=("Arial", 24), fg="blue")
         self.output_label.pack(pady=20)
 
         self.root.bind("<space>", self.handle_space)
