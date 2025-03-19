@@ -7,6 +7,7 @@ class ResearchInterviewApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Research Interview")
+        self.root.geometry("600x400")
 
         self.current_condition = None
         self.current_index = 0
@@ -59,40 +60,49 @@ class ResearchInterviewApp:
         return self.data[self.data["condition"] == condition]
 
     def show_sentence(self, sentences):
-        current_sentence = sentences[[self.current_index]]
         if self.current_index < len(sentences):  # If more sentences remain
-            intended_meaning = current_sentence["intended_meaning"][0]
-            asl_gloss = current_sentence["asl_gloss"][0]
-            system_recognized = current_sentence["error_asl_gloss"][0]
-        
-        # Show the next sentence
-            self.sentence_label.config(text=f"Please sign the following:\n\n\"{intended_meaning}\"\n\nASL Gloss: {asl_gloss}")
+            current_sentence = sentences.iloc[self.current_index]
+            intended_meaning = current_sentence["intended_meaning"]
+            asl_gloss = current_sentence["asl_gloss"]
+            
+            # Show the next sentence
+            self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
             self.output_label.config(text="Press SPACE to continue")
         else:
-        # All sentences completed, show completion message
+            # All sentences completed, show completion message
             self.sentence_label.config(text="Condition Complete. Select another condition.")
             self.output_label.config(text="")
 
-        # Wait 2 seconds before showing condition buttons again
+            # Wait 2 seconds before showing condition buttons again
             self.root.after(2000, self.show_condition_buttons)
 
-    def handle_space(self, event, sentences):
-        accuracy = self.current_condition[1]
+    def handle_space(self, event):
+        condition = self.current_condition
+        sentences = self.find_sentences(condition)
+        if self.current_index < len(sentences):  # Ensure valid index
+            current_sentence = sentences.iloc[self.current_index]
+            intended_meaning = current_sentence["intended_meaning"]
+            asl_gloss = current_sentence["asl_gloss"]
+            system_recognized = current_sentence["error_asl_gloss"]
 
-        if self.current_index < len(sentences[accuracy]):  # Ensure valid index
-            intended_meaning, asl_gloss, system_recognized = sentences[accuracy][self.current_index]
+            if not hasattr(self, "state"):
+                self.state = 0
 
-            if not self.camera_on:
-            # Start the camera on first space press
-                self.start_camera()
-            else:
-            # Stop the camera and show system-recognized output
-                self.stop_camera()
-                self.output_label.config(text=f"System Recognized:\n{system_recognized}")
+            if self.state == 0:
+                self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
+                self.output_label.config(text="Press SPACE when finished signing")
+                self.state = 1
+
+            elif self.state == 1:
+                self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
+                self.output_label.config(text=f"{system_recognized}\n\nPress SPACE for the next sentence.")
+                self.output_label.update_idletasks()
+                self.state = 2
+
+            elif self.state == 2:
                 self.current_index += 1
-
-            # Show next sentence or finish condition
-                self.show_sentence()
+                self.show_sentence(sentences)
+                self.state = 0
 
     def show_condition_buttons(self):
         # Clear the sentence display

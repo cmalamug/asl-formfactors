@@ -70,7 +70,7 @@ class ResearchInterviewApp:
         if self.current_index < len(sentences[accuracy]):
             intended_meaning, asl_gloss, system_recognized = sentences[accuracy][self.current_index]
 
-            self.sentence_label.config(text=f"You are signing for the intended meaning:"{intended_meaning}"ASL Gloss: {asl_gloss}")
+            self.sentence_label.config(text=f"{intended_meaning}\n{asl_gloss}")
             self.output_label.config(text="Press SPACE to continue")
         else:
             self.sentence_label.config(text="Condition Complete. Select another condition.")
@@ -88,7 +88,7 @@ class ResearchInterviewApp:
                 self.state = 0
 
             if self.state == 0:
-                self.sentence_label.config(text=f"You are signing for the intended meaning:"{intended_meaning}"ASL Gloss: {asl_gloss}")
+                self.sentence_label.config(text=f"{intended_meaning}\n{asl_gloss}")
                 self.output_label.config(text="Press SPACE to start signing...")
                 self.state = 1
 
@@ -99,7 +99,7 @@ class ResearchInterviewApp:
 
             elif self.state == 2:
                 self.stop_camera()
-                self.sentence_label.config(text=f"You are signing for the intended meaning:"{intended_meaning}"ASL Gloss: {asl_gloss}")
+                self.sentence_label.config(text=f"{intended_meaning}\n{asl_gloss}")
                 self.output_label.config(text=f"🔎 System Recognized {system_recognized} Press SPACE for the next sentence.")
                 self.output_label.update_idletasks()
                 self.state = 3
