@@ -7,7 +7,7 @@ class ResearchInterviewApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Research Interview")
-        self.root.geometry("600x400")
+        self.root.geometry("1000x400")
 
         self.current_condition = None
         self.current_index = 0
