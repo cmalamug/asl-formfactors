@@ -10,6 +10,7 @@ class ResearchInterviewApp:
         self.root.geometry("1500x400")
 
         self.current_condition = None
+        self.completed_conditions = []
         self.current_index = 0
         self.camera_on = False
         self.cap = None
@@ -39,6 +40,7 @@ class ResearchInterviewApp:
     def start_condition(self, condition):
         # Store selected condition
         self.current_condition = condition
+        self.completed_conditions.append(condition)
         self.current_index = 0
 
         # Hide all buttons by destroying them
@@ -109,20 +111,22 @@ class ResearchInterviewApp:
         self.sentence_label.config(text="")
         self.output_label.config(text="")
 
-        # Show condition selection screen again
-        self.label.config(text="Select a Condition")
+        self.label = tk.Label(root, text="Select a Condition", font=("Arial", 24))
         self.label.pack(pady=20)
 
-        # Recreate the buttons
-        self.button_frame = tk.Frame(self.root)
+        self.button_frame = tk.Frame(root)
         self.button_frame.pack()
 
         # Create buttons for all conditions
         for i in range(1, num_conditions + 1):
             condition_name = f"Condition {i}"
+
             btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i: self.start_condition(c))
             btn.pack(side=tk.LEFT, padx=5)
-
+            
+            if i in self.completed_conditions:
+                btn.config(state = "disabled")
+                
 if __name__ == "__main__":
     root = tk.Tk()
     app = ResearchInterviewApp(root)
