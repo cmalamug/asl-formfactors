@@ -2,6 +2,8 @@ import tkinter as tk
 import pandas as pd
 
 num_conditions = 9
+conditions_used = [3, 5, 9]
+form_factors = ["glasses", "glasses + glove", "glasses + ring", "glasses + wristband"]
 
 class ResearchInterviewApp: 
     def __init__(self, root):
@@ -24,10 +26,11 @@ class ResearchInterviewApp:
         self.button_frame.pack()
 
         # Create buttons for all conditions
-        for i in range(1, num_conditions + 1):
-            condition_name = f"Condition {i}"
-            btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i: self.start_condition(c))
-            btn.pack(side=tk.LEFT, padx=5)
+        for factor in form_factors:
+            for i in conditions_used:
+                condition_name = f"condition {i} {factor}"
+                btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i: self.start_condition(c))
+                btn.pack(side=tk.LEFT, padx=5)
 
         self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
         self.sentence_label.pack(pady=20)
