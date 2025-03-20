@@ -1,5 +1,6 @@
 import tkinter as tk
 import pandas as pd
+import cv2
 
 conditions_used = [3, 5, 9]
 form_factors = ["glasses", "glasses + glove", "glasses + ring", "glasses + wristband"]
@@ -129,8 +130,28 @@ class ResearchInterviewApp:
                 
                 if (i, factor) in self.completed_conditions:
                     btn.config(state = "disabled")
+
+    def start_camera(self):
+        self.cap = cv2.VideoCapture(0)
+        self.camera_on = True
+        self.update_camera()
+
+    def stop_camera(self):
+        if self.cap:
+            self.cap.release()
+            cv2.destroyAllWindows()
+            self.camera_on = False
+            
+    def update_camera(self):
+        ret, frame = self.cap.read()
+        if ret:
+            cv2.imshow('Sign Here', frame)
+        if self.camera_on:
+            self.root.after(10, self.update_camera)
                 
 if __name__ == "__main__":
     root = tk.Tk()
     app = ResearchInterviewApp(root)
+    app.start_camera()
     root.mainloop()
+    app.stop_camera()
