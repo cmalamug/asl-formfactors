@@ -1,7 +1,6 @@
 import tkinter as tk
 import pandas as pd
 
-num_conditions = 9
 conditions_used = [3, 5, 9]
 form_factors = ["glasses", "glasses + glove", "glasses + ring", "glasses + wristband"]
 
@@ -29,7 +28,7 @@ class ResearchInterviewApp:
         for factor in form_factors:
             for i in conditions_used:
                 condition_name = f"condition {i} {factor}"
-                btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i: self.start_condition(c))
+                btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i, f = factor: self.start_condition(c, f))
                 btn.pack(side=tk.LEFT, padx=5)
 
         self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
@@ -40,10 +39,10 @@ class ResearchInterviewApp:
 
         self.root.bind("<space>", self.handle_space)
 
-    def start_condition(self, condition):
+    def start_condition(self, condition, factor):
         # Store selected condition
         self.current_condition = condition
-        self.completed_conditions.append(condition)
+        self.completed_conditions.append((condition, factor))
         self.current_index = 0
 
         # Hide all buttons by destroying them
@@ -121,14 +120,15 @@ class ResearchInterviewApp:
         self.button_frame.pack()
 
         # Create buttons for all conditions
-        for i in range(1, num_conditions + 1):
-            condition_name = f"Condition {i}"
+        for factor in form_factors:
+            for i in conditions_used:
+                condition_name = f"condition {i} {factor}"
 
-            btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i: self.start_condition(c))
-            btn.pack(side=tk.LEFT, padx=5)
-            
-            if i in self.completed_conditions:
-                btn.config(state = "disabled")
+                btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i, f = factor: self.start_condition(c, f))
+                btn.pack(side=tk.LEFT, padx=5)
+                
+                if (i, factor) in self.completed_conditions:
+                    btn.config(state = "disabled")
                 
 if __name__ == "__main__":
     root = tk.Tk()
