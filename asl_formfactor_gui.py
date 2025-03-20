@@ -1,6 +1,7 @@
 import tkinter as tk
 import pandas as pd
 import cv2
+import random
 
 conditions_used = [3, 5, 9]
 form_factors = ["glasses", "glasses + glove", "glasses + ring", "glasses + wristband"]
@@ -9,10 +10,11 @@ class ResearchInterviewApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Research Interview")
-        self.root.geometry("1500x400")
+        self.root.geometry("1200x400")
 
         self.current_condition = None
-        self.completed_conditions = []
+        self.incomplete_conditions = [(c, f) for c in conditions_used for f in form_factors]
+        self.num_same_factor = 0
         self.current_index = 0
         self.camera_on = False
         self.cap = None
@@ -25,12 +27,13 @@ class ResearchInterviewApp:
         self.button_frame = tk.Frame(root)
         self.button_frame.pack()
 
-        # Create buttons for all conditions
-        for factor in form_factors:
-            for i in conditions_used:
-                condition_name = f"condition {i} {factor}"
-                btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i, f = factor: self.start_condition(c, f))
-                btn.pack(side=tk.LEFT, padx=5)
+        # Create buttons for a random condition
+        factor = random.choice(form_factors)
+        i = random.choice(conditions_used)
+
+        condition_name = f"condition {i} {factor}"
+        btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i, f = factor: self.start_condition(c, f))
+        btn.pack(side=tk.LEFT, padx=5)
 
         self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
         self.sentence_label.pack(pady=20)
@@ -43,7 +46,8 @@ class ResearchInterviewApp:
     def start_condition(self, condition, factor):
         # Store selected condition
         self.current_condition = condition
-        self.completed_conditions.append((condition, factor))
+        self.incomplete_conditions.remove((condition, factor))
+        self.num_same_factor += 1
         self.current_index = 0
 
         # Hide all buttons by destroying them
@@ -120,16 +124,16 @@ class ResearchInterviewApp:
         self.button_frame = tk.Frame(root)
         self.button_frame.pack()
 
-        # Create buttons for all conditions
-        for factor in form_factors:
-            for i in conditions_used:
-                condition_name = f"condition {i} {factor}"
+        # Create button
+        if len(self.incomplete_conditions) == 0:
+            self.sentence_label.config(text="All Condition Complete.")
+        else:
+            i, factor = random.choice(incomplete_conditions)
+            
+            condition_name = f"condition {i} {factor}"
 
-                btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i, f = factor: self.start_condition(c, f))
-                btn.pack(side=tk.LEFT, padx=5)
-                
-                if (i, factor) in self.completed_conditions:
-                    btn.config(state = "disabled")
+            btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i, f = factor: self.start_condition(c, f))
+            btn.pack(side=tk.LEFT, padx=5)
 
     def start_camera(self):
         self.cap = cv2.VideoCapture(0)
@@ -141,7 +145,7 @@ class ResearchInterviewApp:
             self.cap.release()
             cv2.destroyAllWindows()
             self.camera_on = False
-            
+
     def update_camera(self):
         ret, frame = self.cap.read()
         if ret:
