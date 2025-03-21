@@ -128,7 +128,7 @@ class ResearchInterviewApp:
         if len(self.incomplete_conditions) == 0:
             self.sentence_label.config(text="All Condition Complete.")
         else:
-            i, factor = random.choice(incomplete_conditions)
+            i, factor = random.choice(self.incomplete_conditions)
             
             condition_name = f"condition {i} {factor}"
 
