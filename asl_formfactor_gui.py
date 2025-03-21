@@ -38,7 +38,7 @@ class ResearchInterviewApp:
         self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
         self.sentence_label.pack(pady=20)
 
-        self.output_label = tk.Label(root, text="", font=("Arial", 24), fg="deeppink")
+        self.output_label = tk.Label(root, text="", font=("Arial", 24), fg="blue")
         self.output_label.pack(pady=20)
 
         self.root.bind("<space>", self.handle_space)

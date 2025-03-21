@@ -10,9 +10,10 @@ class ResearchInterviewApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Research Interview")
-        self.root.geometry("1200x400")
+        self.root.geometry("1200x500")
 
         self.current_condition = None
+        self.current_factor = None
         self.incomplete_conditions = [(c, f) for c in conditions_used for f in form_factors]
         self.num_same_factor = 0
         self.current_index = 0
@@ -21,16 +22,20 @@ class ResearchInterviewApp:
 
         self.data = pd.read_csv("performance_survey_cleaned.csv")
 
+        # Top label: shows before selection
         self.label = tk.Label(root, text="Select a Condition", font=("Arial", 24))
-        self.label.pack(pady=20)
+        self.label.pack(pady=10)
+
+        # NEW: Label to show current condition + factor
+        self.condition_label = tk.Label(root, text="", font=("Arial", 18), fg="gray")
+        self.condition_label.pack()
 
         self.button_frame = tk.Frame(root)
-        self.button_frame.pack()
+        self.button_frame.pack(pady=10)
 
         # Create buttons for a random condition
         factor = random.choice(form_factors)
         i = random.choice(conditions_used)
-
         condition_name = f"condition {i} {factor}"
         btn = tk.Button(self.button_frame, text=condition_name, command=lambda c=i, f=factor: self.start_condition(c, f))
         btn.pack(side=tk.LEFT, padx=5)
@@ -38,11 +43,9 @@ class ResearchInterviewApp:
         self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
         self.sentence_label.pack(pady=20)
 
-        # NEW: Separate label for system output
         self.system_output_label = tk.Label(root, text="", font=("Arial", 24))
         self.system_output_label.pack(pady=10)
 
-        # NEW: Separate label for instructions
         self.instruction_label = tk.Label(root, text="", font=("Arial", 20), fg="blue")
         self.instruction_label.pack(pady=5)
 
@@ -50,14 +53,20 @@ class ResearchInterviewApp:
 
     def start_condition(self, condition, factor):
         self.current_condition = condition
+        self.current_factor = factor
         self.incomplete_conditions.remove((condition, factor))
         self.num_same_factor += 1
         self.current_index = 0
 
+        # Update condition label
+        self.condition_label.config(text=f"Current Condition: {condition} | Form Factor: {factor}")
+
+        # Remove condition selection UI
         for widget in self.button_frame.winfo_children():
             widget.destroy()
-
         self.label.pack_forget()
+
+        # Show sentence display UI
         self.sentence_label.pack(pady=20)
         self.system_output_label.pack(pady=10)
         self.instruction_label.pack(pady=5)
@@ -81,6 +90,7 @@ class ResearchInterviewApp:
             self.sentence_label.config(text="Condition Complete. Select another condition.")
             self.system_output_label.config(text="")
             self.instruction_label.config(text="")
+            self.condition_label.config(text="")  # Clear current condition display
             self.root.after(2000, self.show_condition_buttons)
 
     def handle_space(self, event):
@@ -104,7 +114,7 @@ class ResearchInterviewApp:
             elif self.state == 1:
                 self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
 
-                # NEW: Color-code system output based on match
+                # Compare system output with correct gloss
                 if system_recognized.strip().upper() == asl_gloss.strip().upper():
                     color = "green"
                 else:
@@ -123,15 +133,16 @@ class ResearchInterviewApp:
         self.sentence_label.config(text="")
         self.system_output_label.config(text="")
         self.instruction_label.config(text="")
+        self.condition_label.config(text="")  # Clear current condition
 
         self.label = tk.Label(root, text="Select a Condition", font=("Arial", 24))
-        self.label.pack(pady=20)
+        self.label.pack(pady=10)
 
         self.button_frame = tk.Frame(root)
-        self.button_frame.pack()
+        self.button_frame.pack(pady=10)
 
         if len(self.incomplete_conditions) == 0:
-            self.sentence_label.config(text="All Condition Complete.")
+            self.sentence_label.config(text="All Conditions Complete.")
         else:
             i, factor = random.choice(self.incomplete_conditions)
             condition_name = f"condition {i} {factor}"
