@@ -10,7 +10,7 @@ class ResearchInterviewApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Research Interview")
-        self.root.geometry("1200x500")
+        self.root.geometry("1200x600")
 
         self.current_condition = None
         self.current_factor = None
@@ -22,18 +22,15 @@ class ResearchInterviewApp:
 
         self.data = pd.read_csv("performance_survey_cleaned.csv")
 
-        # Top label: shows before selection
         self.label = tk.Label(root, text="Select a Condition", font=("Arial", 24))
         self.label.pack(pady=10)
 
-        # NEW: Label to show current condition + factor
         self.condition_label = tk.Label(root, text="", font=("Arial", 18), fg="gray")
         self.condition_label.pack()
 
         self.button_frame = tk.Frame(root)
         self.button_frame.pack(pady=10)
 
-        # Create buttons for a random condition
         factor = random.choice(form_factors)
         i = random.choice(conditions_used)
         condition_name = f"condition {i} {factor}"
@@ -43,11 +40,12 @@ class ResearchInterviewApp:
         self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
         self.sentence_label.pack(pady=20)
 
-        self.system_output_label = tk.Label(root, text="", font=("Arial", 24))
-        self.system_output_label.pack(pady=10)
+        self.system_output_text = tk.Text(root, height=2, font=("Arial", 24), bd=0, bg="black", fg="white")
+        self.system_output_text.pack(pady=10)
+        self.system_output_text.config(state=tk.DISABLED)
 
-        self.instruction_label = tk.Label(root, text="", font=("Arial", 20), fg="blue")
-        self.instruction_label.pack(pady=5)
+        self.instruction_label = tk.Label(root, text="", font=("Arial", 20), fg="blue", justify="center")
+        self.instruction_label.pack(pady=5, anchor="center")
 
         self.root.bind("<space>", self.handle_space)
 
@@ -58,17 +56,14 @@ class ResearchInterviewApp:
         self.num_same_factor += 1
         self.current_index = 0
 
-        # Update condition label
         self.condition_label.config(text=f"Current Condition: {condition} | Form Factor: {factor}")
 
-        # Remove condition selection UI
         for widget in self.button_frame.winfo_children():
             widget.destroy()
-        self.label.pack_forget()
 
-        # Show sentence display UI
+        self.label.pack_forget()
         self.sentence_label.pack(pady=20)
-        self.system_output_label.pack(pady=10)
+        self.system_output_text.pack(pady=10)
         self.instruction_label.pack(pady=5)
 
         sentences = self.find_sentences(condition)
@@ -84,13 +79,19 @@ class ResearchInterviewApp:
             asl_gloss = current_sentence["asl_gloss"]
 
             self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
-            self.system_output_label.config(text="")
+
+            self.system_output_text.config(state=tk.NORMAL)
+            self.system_output_text.delete("1.0", tk.END)
+            self.system_output_text.config(state=tk.DISABLED)
+
             self.instruction_label.config(text="Press SPACE to continue")
         else:
             self.sentence_label.config(text="Condition Complete. Select another condition.")
-            self.system_output_label.config(text="")
+            self.system_output_text.config(state=tk.NORMAL)
+            self.system_output_text.delete("1.0", tk.END)
+            self.system_output_text.config(state=tk.DISABLED)
             self.instruction_label.config(text="")
-            self.condition_label.config(text="")  # Clear current condition display
+            self.condition_label.config(text="")
             self.root.after(2000, self.show_condition_buttons)
 
     def handle_space(self, event):
@@ -108,19 +109,35 @@ class ResearchInterviewApp:
             if self.state == 0:
                 self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
                 self.instruction_label.config(text="Press SPACE when finished signing")
-                self.system_output_label.config(text="")
+                self.system_output_text.config(state=tk.NORMAL)
+                self.system_output_text.delete("1.0", tk.END)
+                self.system_output_text.config(state=tk.DISABLED)
                 self.state = 1
 
             elif self.state == 1:
                 self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
 
-                # Compare system output with correct gloss
-                if system_recognized.strip().upper() == asl_gloss.strip().upper():
-                    color = "green"
-                else:
-                    color = "deeppink"
+                gloss_words = asl_gloss.strip().upper().split()
+                recognized_words = system_recognized.strip().upper().split()
 
-                self.system_output_label.config(text=system_recognized, fg=color)
+                self.system_output_text.config(state=tk.NORMAL)
+                self.system_output_text.delete("1.0", tk.END)
+
+                if gloss_words == recognized_words:
+                    # Entire sentence correct
+                    self.system_output_text.insert(tk.END, system_recognized, "correct")
+                else:
+                    # Word-by-word comparison
+                    for i, word in enumerate(recognized_words):
+                        if i < len(gloss_words) and word == gloss_words[i]:
+                            self.system_output_text.insert(tk.END, word + " ")
+                        else:
+                            self.system_output_text.insert(tk.END, word + " ", "wrong")
+
+                self.system_output_text.tag_config("wrong", foreground="red")
+                self.system_output_text.tag_config("correct", foreground="green")
+                self.system_output_text.config(state=tk.DISABLED)
+
                 self.instruction_label.config(text="Press SPACE for the next sentence.")
                 self.state = 2
 
@@ -131,9 +148,12 @@ class ResearchInterviewApp:
 
     def show_condition_buttons(self):
         self.sentence_label.config(text="")
-        self.system_output_label.config(text="")
         self.instruction_label.config(text="")
-        self.condition_label.config(text="")  # Clear current condition
+        self.condition_label.config(text="")
+
+        self.system_output_text.config(state=tk.NORMAL)
+        self.system_output_text.delete("1.0", tk.END)
+        self.system_output_text.config(state=tk.DISABLED)
 
         self.label = tk.Label(root, text="Select a Condition", font=("Arial", 24))
         self.label.pack(pady=10)
