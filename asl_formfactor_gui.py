@@ -3,7 +3,8 @@ import pandas as pd
 import cv2
 import random
 
-conditions_used = [3, 5, 9]
+# 3 = 100% accuracy, 5 = 92% accuracy with 2 misrecognized signs, 9 = 68% accuracy with 2 misrecognized signs 
+conditions_used = [5, 9]
 form_factors = ["glasses", "glasses + glove", "glasses + ring", "glasses + wristband"]
 
 class ResearchInterviewApp: 
@@ -14,8 +15,8 @@ class ResearchInterviewApp:
 
         self.current_condition = None
         self.incomplete_conditions = [(c, f) for c in conditions_used for f in form_factors]
-        self.num_same_factor = 0
         self.current_index = 0
+
         self.camera_on = False
         self.cap = None
 
@@ -38,7 +39,7 @@ class ResearchInterviewApp:
         self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
         self.sentence_label.pack(pady=20)
 
-        self.output_label = tk.Label(root, text="", font=("Arial", 24), fg="blue")
+        self.output_label = tk.Label(root, text="", font=("Arial", 24), fg="lightblue")
         self.output_label.pack(pady=20)
 
         self.root.bind("<space>", self.handle_space)
@@ -47,7 +48,6 @@ class ResearchInterviewApp:
         # Store selected condition
         self.current_condition = condition
         self.incomplete_conditions.remove((condition, factor))
-        self.num_same_factor += 1
         self.current_index = 0
 
         # Hide all buttons by destroying them

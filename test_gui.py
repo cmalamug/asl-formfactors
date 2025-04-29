@@ -4,17 +4,18 @@ import cv2
 import random
 
 conditions_used = [3, 5, 9]
-form_factors = ["glasses", "glasses + glove", "glasses + ring", "glasses + wristband"]
+form_factors = ["Glasses", "Glasses + Glove", "Glasses + Ring", "Glasses + Wristband"]
 
 class ResearchInterviewApp: 
     def __init__(self, root):
         self.root = root
         self.root.title("Research Interview")
-        self.root.geometry("1200x600")
-
+        self.root.geometry("1400x600")
+        
         self.current_condition = None
         self.current_factor = None
         self.incomplete_conditions = [(c, f) for c in conditions_used for f in form_factors]
+
         self.num_same_factor = 0
         self.current_index = 0
         self.camera_on = False
@@ -40,8 +41,8 @@ class ResearchInterviewApp:
         self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
         self.sentence_label.pack(pady=20)
 
-        self.system_output_text = tk.Text(root, height=2, font=("Arial", 24), bd=0, bg="black", fg="white")
-        self.system_output_text.pack(pady=10)
+        self.system_output_text = tk.Label(root, height=2, font=("Arial", 24), bd=0, fg="white", justify="center")
+        self.system_output_text.pack(pady=10, anchor="center")
         self.system_output_text.config(state=tk.DISABLED)
 
         self.instruction_label = tk.Label(root, text="", font=("Arial", 20), fg="blue", justify="center")
