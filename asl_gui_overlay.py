@@ -85,6 +85,7 @@ class ResearchInterviewApp:
 
     def start_camera(self):
         self.cap = cv2.VideoCapture(0)
+
         self.camera_on = True
         self.update_camera()
 
@@ -94,17 +95,27 @@ class ResearchInterviewApp:
             cv2.destroyAllWindows()
             self.camera_on = False
 
-    def draw_centered_text(self, frame, text, y, color, font_scale=1.0, thickness=2):
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
+    def draw_centered_text(self, frame, text, y, color, font_scale=1.0, thickness=2, max_width=None):
+        font = cv2.FONT_HERSHEY_DUPLEX
+        if max_width is None:
+            max_width = frame.shape[1] - 40  # Add 20px padding on each side
+
+        # Try reducing scale if text is too wide
+        while True:
+            text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
+            if text_size[0] <= max_width or font_scale < 0.5:
+                break
+            font_scale -= 0.05
+
         x = (frame.shape[1] - text_size[0]) // 2
         cv2.putText(frame, text, (x, y), font, font_scale, color, thickness, lineType=cv2.LINE_AA)
+
 
     def draw_centered_comparison(self, frame, ref_text, pred_text, y):
         ref_words = ref_text.strip().upper().split()
         pred_words = pred_text.strip().upper().split()
 
-        font = cv2.FONT_HERSHEY_SIMPLEX
+        font = cv2.FONT_HERSHEY_DUPLEX
         font_scale = 1.0
         thickness = 2
         space = 15
