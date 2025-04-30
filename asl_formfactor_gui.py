@@ -3,7 +3,6 @@ import pandas as pd
 import cv2
 import random
 
-# 3 = 100% accuracy, 5 = 92% accuracy with 2 misrecognized signs, 9 = 68% accuracy with 2 misrecognized signs 
 conditions_used = [5, 9]
 form_factors = ["glasses", "glasses + glove", "glasses + ring", "glasses + wristband"]
 
@@ -11,57 +10,62 @@ class ResearchInterviewApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Research Interview")
-        self.root.geometry("1200x400")
+        self.root.geometry("1200x600")
 
         self.current_condition = None
+        self.current_factor = None
         self.incomplete_conditions = [(c, f) for c in conditions_used for f in form_factors]
+        self.num_same_factor = 0
         self.current_index = 0
-
         self.camera_on = False
         self.cap = None
 
         self.data = pd.read_csv("performance_survey_cleaned.csv")
 
         self.label = tk.Label(root, text="Select a Condition", font=("Arial", 24))
-        self.label.pack(pady=20)
+        self.label.pack(pady=10)
+
+        self.condition_label = tk.Label(root, text="", font=("Arial", 18), fg="gray")
+        self.condition_label.pack()
 
         self.button_frame = tk.Frame(root)
-        self.button_frame.pack()
+        self.button_frame.pack(pady=10)
 
-        # Create buttons for a random condition
         factor = random.choice(form_factors)
         i = random.choice(conditions_used)
-
         condition_name = f"condition {i} {factor}"
-        btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i, f = factor: self.start_condition(c, f))
+        btn = tk.Button(self.button_frame, text=condition_name, command=lambda c=i, f=factor: self.start_condition(c, f))
         btn.pack(side=tk.LEFT, padx=5)
 
         self.sentence_label = tk.Label(root, text="", font=("Arial", 24))
         self.sentence_label.pack(pady=20)
 
-        self.output_label = tk.Label(root, text="", font=("Arial", 24), fg="lightblue")
-        self.output_label.pack(pady=20)
+        self.system_output_text = tk.Text(root, height=2, font=("Arial", 24), bd=0, bg="black", fg="white")
+        self.system_output_text.pack(pady=10)
+        self.system_output_text.config(state=tk.DISABLED)
+
+        self.instruction_label = tk.Label(root, text="", font=("Arial", 20), fg="blue", justify="center")
+        self.instruction_label.pack(pady=5, anchor="center")
 
         self.root.bind("<space>", self.handle_space)
 
     def start_condition(self, condition, factor):
-        # Store selected condition
         self.current_condition = condition
+        self.current_factor = factor
         self.incomplete_conditions.remove((condition, factor))
+        self.num_same_factor += 1
         self.current_index = 0
 
-        # Hide all buttons by destroying them
+        self.condition_label.config(text=f"Current Condition: {condition} | Form Factor: {factor}")
+
         for widget in self.button_frame.winfo_children():
             widget.destroy()
 
-        # Hide the title label
         self.label.pack_forget()
-
-        # Show the sentence area
         self.sentence_label.pack(pady=20)
-        self.output_label.pack(pady=20)
+        self.system_output_text.pack(pady=10)
+        self.instruction_label.pack(pady=5)
 
-        # Start showing sentences
         sentences = self.find_sentences(condition)
         self.show_sentence(sentences)
 
@@ -69,26 +73,31 @@ class ResearchInterviewApp:
         return self.data[self.data["condition"] == condition]
 
     def show_sentence(self, sentences):
-        if self.current_index < len(sentences):  # If more sentences remain
+        if self.current_index < len(sentences):
             current_sentence = sentences.iloc[self.current_index]
             intended_meaning = current_sentence["intended_meaning"]
             asl_gloss = current_sentence["asl_gloss"]
-            
-            # Show the next sentence
-            self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
-            self.output_label.config(text="Press SPACE to continue")
-        else:
-            # All sentences completed, show completion message
-            self.sentence_label.config(text="Condition Complete. Select another condition.")
-            self.output_label.config(text="")
 
-            # Wait 2 seconds before showing condition buttons again
+            self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
+
+            self.system_output_text.config(state=tk.NORMAL)
+            self.system_output_text.delete("1.0", tk.END)
+            self.system_output_text.config(state=tk.DISABLED)
+
+            self.instruction_label.config(text="Press SPACE to continue")
+        else:
+            self.sentence_label.config(text="Condition Complete. Select another condition.")
+            self.system_output_text.config(state=tk.NORMAL)
+            self.system_output_text.delete("1.0", tk.END)
+            self.system_output_text.config(state=tk.DISABLED)
+            self.instruction_label.config(text="")
+            self.condition_label.config(text="")
             self.root.after(2000, self.show_condition_buttons)
 
     def handle_space(self, event):
         condition = self.current_condition
         sentences = self.find_sentences(condition)
-        if self.current_index < len(sentences):  # Ensure valid index
+        if self.current_index < len(sentences):
             current_sentence = sentences.iloc[self.current_index]
             intended_meaning = current_sentence["intended_meaning"]
             asl_gloss = current_sentence["asl_gloss"]
@@ -99,13 +108,37 @@ class ResearchInterviewApp:
 
             if self.state == 0:
                 self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
-                self.output_label.config(text="Press SPACE when finished signing")
+                self.instruction_label.config(text="Press SPACE when finished signing")
+                self.system_output_text.config(state=tk.NORMAL)
+                self.system_output_text.delete("1.0", tk.END)
+                self.system_output_text.config(state=tk.DISABLED)
                 self.state = 1
 
             elif self.state == 1:
                 self.sentence_label.config(text=f"{intended_meaning}\n\n{asl_gloss}")
-                self.output_label.config(text=f"{system_recognized}\n\nPress SPACE for the next sentence.")
-                self.output_label.update_idletasks()
+
+                gloss_words = asl_gloss.strip().upper().split()
+                recognized_words = system_recognized.strip().upper().split()
+
+                self.system_output_text.config(state=tk.NORMAL)
+                self.system_output_text.delete("1.0", tk.END)
+
+                if gloss_words == recognized_words:
+                    # Entire sentence correct
+                    self.system_output_text.insert(tk.END, system_recognized, "correct")
+                else:
+                    # Word-by-word comparison
+                    for i, word in enumerate(recognized_words):
+                        if i < len(gloss_words) and word == gloss_words[i]:
+                            self.system_output_text.insert(tk.END, word + " ")
+                        else:
+                            self.system_output_text.insert(tk.END, word + " ", "wrong")
+
+                self.system_output_text.tag_config("wrong", foreground="red")
+                self.system_output_text.tag_config("correct", foreground="green")
+                self.system_output_text.config(state=tk.DISABLED)
+
+                self.instruction_label.config(text="Press SPACE for the next sentence.")
                 self.state = 2
 
             elif self.state == 2:
@@ -114,25 +147,26 @@ class ResearchInterviewApp:
                 self.state = 0
 
     def show_condition_buttons(self):
-        # Clear the sentence display
         self.sentence_label.config(text="")
-        self.output_label.config(text="")
+        self.instruction_label.config(text="")
+        self.condition_label.config(text="")
+
+        self.system_output_text.config(state=tk.NORMAL)
+        self.system_output_text.delete("1.0", tk.END)
+        self.system_output_text.config(state=tk.DISABLED)
 
         self.label = tk.Label(root, text="Select a Condition", font=("Arial", 24))
-        self.label.pack(pady=20)
+        self.label.pack(pady=10)
 
         self.button_frame = tk.Frame(root)
-        self.button_frame.pack()
+        self.button_frame.pack(pady=10)
 
-        # Create button
         if len(self.incomplete_conditions) == 0:
-            self.sentence_label.config(text="All Condition Complete.")
+            self.sentence_label.config(text="All Conditions Complete.")
         else:
             i, factor = random.choice(self.incomplete_conditions)
-            
             condition_name = f"condition {i} {factor}"
-
-            btn = tk.Button(self.button_frame, text=condition_name, command=lambda c = i, f = factor: self.start_condition(c, f))
+            btn = tk.Button(self.button_frame, text=condition_name, command=lambda c=i, f=factor: self.start_condition(c, f))
             btn.pack(side=tk.LEFT, padx=5)
 
     def start_camera(self):
@@ -152,7 +186,7 @@ class ResearchInterviewApp:
             cv2.imshow('Sign Here', frame)
         if self.camera_on:
             self.root.after(10, self.update_camera)
-                
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = ResearchInterviewApp(root)
